@@ -1,3 +1,10 @@
+#2.7 The answers on the blackboard did not make sence, so i investigated a bit. The blackboard answers was 1 skip (correct), b) 10 and c)18
+# turns out there are 33 comparisons without skipointers and 32 with skip pointers
+#Note that "and"-operations save some time. example in if(False and code_Will_Never_Run()), the function will never run since the expression has to be False anyway
+
+#by posting comparisjon i included both when they are compared to be the same,     [16 times with skip pointers]
+# when they are compared to find who are smalest, and also when the next skip pointer value is compared with the value of list2   [16 times with skip pointers]
+
 
 
 list1=(3,5,9,15,24,39,60,68,75,81,84,89,92,96,97,100,115)
@@ -77,5 +84,5 @@ answer=intersectWithSkips(0,0)
 
 
 print('equalComparisons',equalComparisons)
-print('siceComparison', sizeComparison)
+print('sizeComparison', sizeComparison)
 print('answer',answer)
