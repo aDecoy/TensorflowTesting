@@ -11,7 +11,7 @@ list1=(3,5,9,15,24,39,60,68,75,81,84,89,92,96,97,100,115)
 list2=(3,5,89,95,97,99,100,101)
 
 skipPointers=[3,24,75,92,115]
-skipPointers=[]
+# skipPointers=[]
 
 equalComparisons= 0
 sizeComparison= 0
@@ -54,9 +54,10 @@ def intersectWithSkips(p1,p2):
     global equalComparisons
     answer=[]
     while (p1<len(list1) and p2<len(list2)):
-        print('valueP1',list1[p1],'valueP2',list2[p2])
         print('equalComparisons',equalComparisons)
         print('sizecomparison', sizeComparison)
+        print('valueP1',list1[p1],'valueP2',list2[p2])
+
 
         print('_______________________________________________')
         equalComparisons += 1
@@ -66,7 +67,7 @@ def intersectWithSkips(p1,p2):
             answer.append(list1[p1])
             p1+=1
             p2+=1
-            print('new values are ',list1[p1], list2[p2])
+            # print('new values are ',list1[p1], list2[p2])
         elif lower(list1[p1],list2[p2]):
             if (hasSkip(list1[p1]) and lowerOrEqual(list1[skip(p1)],list2[p2])):
                 while (hasSkip(list1[p1]) and lowerOrEqual(list1[skip(p1)],list2[p2])):
