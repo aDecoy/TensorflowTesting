@@ -5,7 +5,12 @@
 #by posting comparisjon i included both when they are compared to be the same,     [16 times with skip pointers]
 # when they are compared to find who are smalest, and also when the next skip pointer value is compared with the value of list2   [16 times with skip pointers]
 
+# when the postings are the same they will compare once. If they differ and have no skip pointers, they will compare 2 times.
+# First to see if they are the same, and then to see who are bigger.
 
+#If it also has skippointers then it will also compare in the if, then in the while loop to it has gone further then it is allowed.
+#This means that one skip is 4 comparisons! test for equal, then for largest size, then to see if skip is valid, then you test the same again in the while.
+# And lastly you also compare the for the skip that takes you to far with the biggest of the postings.
 
 list1=(3,5,9,15,24,39,60,68,75,81,84,89,92,96,97,100,115)
 list2=(3,5,89,95,97,99,100,101)
