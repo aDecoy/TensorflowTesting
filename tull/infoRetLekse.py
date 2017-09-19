@@ -4,10 +4,8 @@
 
 
 # when the postings are the same they will compare once (in psudocode line 3). If they differ and have no skip pointers, they will compare 2 times (in psudocode line 3 and line 7).
-# First to see if they are the same, and then to see who are bigger. The book's answer seems to completely ignore this fact.
+# First to see if they are the same, and then to see who are bigger. The book's answer seems to completely ignore this fact. It is as if the question was: "how many comparisons give the answer True?"
 
-#If it also has skippointers then it will also compare in the "if"(line 8 or 12), then for every skip in the "while" loop to it has gone further then it is allowed (line 9 or 13) .
-#This means that one skip is 4 comparisons!
 # One test for equal, then for largest size, then to see if skip is valid, then you test the same again in the while.
 # And lastly you also compare the for the skip that takes you to far with the biggest of the postings.
 
