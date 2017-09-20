@@ -8,6 +8,7 @@
 
 # One test for equal, then for largest size, then to see if skip is valid, then you test the same again in the while.
 # And lastly you also compare the for the skip that takes you to far with the biggest of the postings.
+#This means that one skip is 4 comparisons!
 
 #by posting comparisjon i included both when they are compared to be the same,     [16 times with skip pointers]
 # when they are compared to find who are smalest, and also when the next skip pointer value is compared with the value of list2   [16 times with skip pointers]
@@ -17,32 +18,33 @@
 list1=(3,5,9,15,24,39,60,68,75,81,84,89,92,96,97,100,115)
 list2=(3,5,89,95,97,99,100,101)
 
-skipPointers=[3,24,75,92,115]  #note that this code only works for skip pointers from list 1
-# skipPointers=[]
+skipPointers=[3,24,75,92,115]  #note that this code only works for skip pointers in list 1
+skipPointers=[]
 
 equalComparisons= 0
-sizeComparison= 0
+sizeComparisons= 0
 
 a=4
 b=5
 
 def test(value,match):
-    print('test function ran')
+    print('This should never be printed if "and" was used. will be shown if "&" was used.')
     if value==match:
         return True
     return False
 
+#just to make sure how "and" and "&" works in python
 if (False and test(a,4)):
     print('teset fullført')
 
 def lower(value1,value2):
-    global sizeComparison
-    sizeComparison+=1
+    global sizeComparisons
+    sizeComparisons+=1
     # print('sizecomparison', siceComparison)
     return value1<value2
 def lowerOrEqual(value1,value2):
-    global sizeComparison
-    sizeComparison+=1
+    global sizeComparisons
+    sizeComparisons+=1
     # print('sizecomparison', siceComparison)
 
     return value1<=value2
@@ -62,9 +64,8 @@ def intersectWithSkips(p1,p2):
     answer=[]
     while (p1<len(list1) and p2<len(list2)):
         print('equalComparisons',equalComparisons)
-        print('sizecomparison', sizeComparison)
+        print('sizecomparison', sizeComparisons)
         print('valueP1',list1[p1],'valueP2',list2[p2])
-
 
         print('_______________________________________________')
         equalComparisons += 1
@@ -92,5 +93,5 @@ answer=intersectWithSkips(0,0)
 
 
 print('equalComparisons',equalComparisons)
-print('sizeComparison', sizeComparison)
+print('sizeComparison', sizeComparisons)
 print('answer',answer)
