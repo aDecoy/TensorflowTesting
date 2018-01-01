@@ -93,5 +93,5 @@ answer=intersectWithSkips(0,0)
 
 
 print('equalComparisons',equalComparisons)
-print('sizeComparison', sizeComparisons)
+print('sizeComparisons', sizeComparisons)
 print('answer',answer)
