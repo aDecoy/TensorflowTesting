@@ -47,6 +47,8 @@ def main(argv):
         n_classes=3)
 
     # Train the Model.
+    print(train_y)
+    print(train_x)
     classifier.train(
         input_fn=lambda:iris_data.train_input_fn(train_x, train_y,
                                                  args.batch_size),
@@ -72,7 +74,6 @@ def main(argv):
         input_fn=lambda:iris_data.eval_input_fn(predict_x,
                                                 labels=None,
                                                 batch_size=args.batch_size))
-
     for pred_dict, expec in zip(predictions, expected):
         template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
 
