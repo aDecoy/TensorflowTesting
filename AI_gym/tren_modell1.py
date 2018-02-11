@@ -18,17 +18,72 @@ parser.add_argument('--train_steps', default=1000, type=int,
                     help='number of training steps')
 parser.add_argument('--saved_model_dir', type=str,
     default=os.path.join(os.getenv('TEST_TMPDIR', '/AppData/Local/Temp/'),
-                         'tensorflow/AI_gym/cartpole0'),
+                         'tensorflow/AI_gym/cartpole0_2/'),
     help='Directory to put the trained model.'
 )
+
+
+
+def my_model(features, labels, mode, params, reinforcement_loss=None):
+    """DNN with three hidden layers, and dropout of 0.1 probability."""
+    # Create three fully connected layers each layer having a dropout
+    # probability of 0.1.
+    net = tf.feature_column.input_layer(features, params['feature_columns'])
+    for units in params['hidden_units']:
+        net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
+
+    # Compute logits (1 per class).
+    logits = tf.layers.dense(net, params['n_classes'], activation=None)
+
+    # Compute predictions.
+    predicted_classes = tf.argmax(logits, 1)
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        predictions = {
+            'class_ids': predicted_classes[:, tf.newaxis],
+            'probabilities': tf.nn.softmax(logits),
+            'logits': logits,
+        }
+        export_outputs2=tf.estimator.export.ExportOutput()
+        export_outputs2=tf.estimator.export.ClassificationOutput(predictions['probabilities'])
+        export_outputs={'name2':export_outputs2}
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions,export_outputs=export_outputs )
+
+    # Compute loss.
+    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+
+    # Compute evaluation metrics.
+    accuracy = tf.metrics.accuracy(labels=labels,
+                                   predictions=predicted_classes,
+                                   name='acc_op')
+    metrics = {'accuracy': accuracy}
+    tf.summary.scalar('accuracy', accuracy[1])
+
+    if mode == tf.estimator.ModeKeys.EVAL:
+        return tf.estimator.EstimatorSpec(
+            mode, loss=loss, eval_metric_ops=metrics)
+
+
+    # Create training op.
+    assert mode == tf.estimator.ModeKeys.TRAIN
+    #if training with reinforcment learning
+    if reinforcement_loss:
+        optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
+        train_op = optimizer.minimize(reinforcement_loss, global_step=tf.train.get_global_step())
+        return tf.estimator.EstimatorSpec(mode, loss=reinforcement_loss, train_op=train_op)
+
+    #if training with supervised learning. (labels used instead of loss)
+    optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
+    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+
 
 def input_fn_train_generic(train_observation,train_action,batch_size):
     #train_observation=dict(train_observation)
     """An input function for training"""
     # Convert the inputs to a Dataset.
-    print(train_action.shape)
+    # print(train_action.shape)
     class_labels = np.argmax(train_action, axis=-1)
-    print(class_labels.shape)
+    # print(class_labels.shape)
     dataset = tf.contrib.data.Dataset.from_tensor_slices((train_observation, class_labels))
 
     # Shuffle, repeat, and batch the examples.
@@ -182,12 +237,13 @@ def main(argv):
     #tesorflow estimator is used to make a model that is trained with "observation" as x and "action" as label
     #Lag modell
 
-    classifier = tf.estimator.DNNClassifier(
-        feature_columns=my_feature_columns,
-        hidden_units=[10, 10],
-        n_classes=2,
-        model_dir=args.saved_model_dir
-        )
+    classifier = tf.estimator.Estimator(
+        model_fn=my_model,
+        params={
+        'feature_columns':my_feature_columns,
+        'hidden_units':[10, 10],
+        'n_classes':2},
+        model_dir=args.saved_model_dir )
 
     #Treningsdata
 
@@ -210,8 +266,12 @@ def main(argv):
         steps=args.train_steps,
 
     )
+
     feature_spec = {'x': tf.FixedLenFeature([1],tf.float32),'x_dot': tf.FixedLenFeature([1],tf.float32),'theta':tf.FixedLenFeature([1],tf.float32),'theta_dot':tf.FixedLenFeature([1],tf.float32)}
     serving_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)
+    # feature_spec = {'x': tf.placeholder(tf.float32,[1],'x'),'x_dot': tf.placeholder(tf.float32,[1],'x_dot'),'theta':tf.placeholder(tf.float32,[1],'theta'),'theta_dot':tf.placeholder(tf.float32,[1],'theta_dot')}
+    # serving_fn = tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
+    print(serving_fn)
 
     classifier.export_savedmodel(args.saved_model_dir, serving_input_receiver_fn=serving_fn)
 
