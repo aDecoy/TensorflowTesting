@@ -18,14 +18,15 @@ parser.add_argument('--train_steps', default=1000, type=int,
                     help='number of training steps')
 parser.add_argument('--saved_model_dir', type=str,
     default=os.path.join(os.getenv('TEST_TMPDIR', '/AppData/Local/Temp/'),
-                         'tensorflow/AI_gym/cartpole0_2/'),
+                         'tensorflow/AI_gym/cartpole0_3/'),
     help='Directory to put the trained model.'
 )
 
 
 
-def my_model(features, labels, mode, params, reinforcement_loss=None):
+def my_model(features, labels, mode, params,reinforcement_loss=None):
     """DNN with three hidden layers, and dropout of 0.1 probability."""
+    reinforcement_loss = None
     # Create three fully connected layers each layer having a dropout
     # probability of 0.1.
     net = tf.feature_column.input_layer(features, params['feature_columns'])
@@ -64,24 +65,28 @@ def my_model(features, labels, mode, params, reinforcement_loss=None):
 
 
     # Create training op.
-    assert mode == tf.estimator.ModeKeys.TRAIN
     #if training with reinforcment learning
-    if reinforcement_loss:
+    if mode== tf.estimator.ModeKeys.TRAIN2:
+        loss= sum(labels)
         optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
-        train_op = optimizer.minimize(reinforcement_loss, global_step=tf.train.get_global_step())
-        return tf.estimator.EstimatorSpec(mode, loss=reinforcement_loss, train_op=train_op)
+        train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
+    assert mode == tf.estimator.ModeKeys.TRAIN
     #if training with supervised learning. (labels used instead of loss)
-    optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
+    optimizer = tf.train.AdagradOptimizer(learning_rate=0.5)
     train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+    # train_op = optimizer.minimize(loss, global_step=None)
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
 
 def input_fn_train_generic(train_observation,train_action,batch_size):
     #train_observation=dict(train_observation)
     """An input function for training"""
-    # Convert the inputs to a Dataset.
-    # print(train_action.shape)
+    # Convert the inputs to a Dataset
+
+    # print(train_observation)
+    # print(train_action)
     class_labels = np.argmax(train_action, axis=-1)
     # print(class_labels.shape)
     dataset = tf.contrib.data.Dataset.from_tensor_slices((train_observation, class_labels))
@@ -116,7 +121,9 @@ env.reset()
 
 
 goal_steps = 500
-score_requirement = 50
+env._max_episode_steps=goal_steps
+
+score_requirement = 80
 initial_games = 10000
 batch_size=100
 training_steps=1000
@@ -147,7 +154,7 @@ def some_random_games_first():
 #some_random_games_first()
 
 
-def initial_population():
+def initial_random_population():
     env.reset()
     # [OBS, MOVES]
     training_data = []
@@ -176,6 +183,7 @@ def initial_population():
                 game_memory.append([prev_observation, action])
             prev_observation = observation
             score += reward
+
             if done: break
 
         # IF our score is higher than our threshold, we'd like to save
@@ -205,7 +213,6 @@ def initial_population():
     # just in case you wanted to reference later
     training_data_save = np.array(training_data)
     np.save('saved.npy', training_data_save)
-
     # some stats here, to further illustrate the neural network magic!
     print('Average accepted score:', mean(accepted_scores))
     print('Median score for accepted scores:', median(accepted_scores))
@@ -215,14 +222,13 @@ def initial_population():
 
 def main(argv):
     args = parser.parse_args(argv[1:])
-
     # lagrinsplass
     if tf.gfile.Exists(args.saved_model_dir):
         tf.gfile.DeleteRecursively(args.saved_model_dir)
     tf.gfile.MakeDirs(args.saved_model_dir)
 
     #trainingdata is an array with [observation seen,action should be taken]
-    training_data = initial_population()
+    training_data = initial_random_population()
     #make it go up in batch size
     # training_data=training_data[:len(training_data)-len(training_data)%batch_size,:] #make it go up in batch size
     # print("")
@@ -243,7 +249,8 @@ def main(argv):
         'feature_columns':my_feature_columns,
         'hidden_units':[10, 10],
         'n_classes':2},
-        model_dir=args.saved_model_dir )
+        model_dir=args.saved_model_dir,
+        )
 
     #Treningsdata
 
@@ -253,26 +260,21 @@ def main(argv):
     #gir train_observasjoner samme nøkkler som my_feature_columns
     keys=['x','x_dot','theta','theta_dot']
     train_observation = {'x': train_observation[:,0],'x_dot': train_observation[:,1],'theta':train_observation[:,2],'theta_dot':train_observation[:,3]}
-
     train_action= training_data[:,1]
     train_action= np.array(train_action.tolist())
     #estimator cnn classifier expects one class int, not a one hot vector
     #Tren modellen
+
     classifier.train(
         input_fn=lambda: input_fn_train_generic(train_observation, train_action,
                                                             args.batch_size),
         # input_fn=lambda:tf.estimator.inputs.numpy_input_fn(train_observation,train_action,
         #                                  args.batch_size,shuffle=True),
         steps=args.train_steps,
-
     )
 
     feature_spec = {'x': tf.FixedLenFeature([1],tf.float32),'x_dot': tf.FixedLenFeature([1],tf.float32),'theta':tf.FixedLenFeature([1],tf.float32),'theta_dot':tf.FixedLenFeature([1],tf.float32)}
     serving_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(feature_spec)
-    # feature_spec = {'x': tf.placeholder(tf.float32,[1],'x'),'x_dot': tf.placeholder(tf.float32,[1],'x_dot'),'theta':tf.placeholder(tf.float32,[1],'theta'),'theta_dot':tf.placeholder(tf.float32,[1],'theta_dot')}
-    # serving_fn = tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
-    print(serving_fn)
-
     classifier.export_savedmodel(args.saved_model_dir, serving_input_receiver_fn=serving_fn)
 
 if __name__ == '__main__':

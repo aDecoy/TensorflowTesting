@@ -23,6 +23,8 @@ env.reset()
 
 
 goal_steps = 500
+env._max_episode_steps=goal_steps
+
 score_requirement = 50
 initial_games = 10000
 
@@ -35,12 +37,12 @@ parser.add_argument('--train_steps', default=1000, type=int,
 
 
 saveFileTempFolder=''
-for filename in glob.iglob('/AppData/Local/Temp/tensorflow/AI_gym/cartpole0_2/*/', recursive=True):
+for filename in glob.iglob('/AppData/Local/Temp/tensorflow/AI_gym/cartpole0_3/*/', recursive=True):
     saveFileTempFolder=(filename.split('\\')[1])
 
 parser.add_argument('--saved_model_dir', type=str,
     default=os.path.join(os.getenv('TEST_TMPDIR', '/AppData/Local/Temp/'),
-                     'tensorflow/AI_gym/cartpole0_2/'+saveFileTempFolder),
+                     'tensorflow/AI_gym/cartpole0_3/'+saveFileTempFolder),
     help='Directory to put the trained model.'
 )
 
@@ -141,7 +143,6 @@ def main(argv):
             # print('score:{}  action:{}  observation:{}'.format(score, action, observation))
 
             if done:
-                print(score)
                 break
         print(score)
 
