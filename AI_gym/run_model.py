@@ -47,30 +47,6 @@ parser.add_argument('--saved_model_dir', type=str,
 )
 
 
-
-
-def eval_input_fn(features, labels, batch_size):
-    """An input function for evaluation or prediction"""
-    features=dict(features)
-    if labels is None:
-        # No labels, use only features.
-        inputs = features
-    else:
-        inputs = (features, labels)
-
-    # Convert the inputs to a Dataset.
-    dataset = tf.contrib.data.Dataset.from_tensor_slices(inputs)
-
-    # Batch the examples
-    assert batch_size is not None, "batch_size must not be None"
-    dataset = dataset.batch(batch_size)
-
-    # Return the read end of the pipeline.
-    return dataset.make_one_shot_iterator().get_next()
-
-
-
-
 def main(argv):
     args = parser.parse_args(argv[1:])
     print("Running model in :{}".format(args.saved_model_dir))
@@ -79,21 +55,7 @@ def main(argv):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
     tf.logging.set_verbosity(tf.logging.ERROR)
 
-    # load the saved model
-    my_feature_columns = [
-        tf.feature_column.numeric_column(key='x'),
-        tf.feature_column.numeric_column(key='x_dot'),
-        tf.feature_column.numeric_column(key='theta'),
-        tf.feature_column.numeric_column(key='theta_dot')
-    ]
-    classifier = tf.estimator.Estimator(
-        model_fn=my_model,
-        params={
-        'feature_columns':my_feature_columns,
-        'hidden_units':[10, 10],
-        'n_classes':2},
-        model_dir=args.saved_model_dir )
-
+    # note that there are multiple functions for creating a Predictor, but I have only gotten this one to work
     classifier_predictor=from_saved_model(args.saved_model_dir)
 
     # print(output_dict)
@@ -113,6 +75,7 @@ def main(argv):
         for _ in range(goal_steps):
             env.render()
             # choose  action (0 or 1)
+            #Predictor wants input as bytes in a very spesific way.
             model_input = tf.train.Example(
                 features=tf.train.Features(
                     feature={
@@ -133,7 +96,7 @@ def main(argv):
             prediction = classifier_predictor({'inputs': [model_input_bytes]})
 
             # do it!
-            action=np.argmax(prediction['scores'], axis=-1)[0]
+            action=np.argmax(prediction['scores'], axis=-1)[0]    #change one hot array to the index with highest value
             observation, reward, done, info = env.step(action)
             observation = {'x': [observation[0]],
                            'x_dot': [observation[1]],

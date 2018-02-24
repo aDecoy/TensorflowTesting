@@ -25,7 +25,7 @@ parser.add_argument('--saved_model_dir', type=str,
 
 
 def my_model(features, labels, mode, params,reinforcement_loss=None):
-    """DNN with three hidden layers, and dropout of 0.1 probability."""
+    """DNN with three hidden layers. This decides what do happen in case you call Estimator.train(_),eval(_) or predict(_)"""
     reinforcement_loss = None
     # Create three fully connected layers each layer having a dropout
     # probability of 0.1.
@@ -62,15 +62,6 @@ def my_model(features, labels, mode, params,reinforcement_loss=None):
     if mode == tf.estimator.ModeKeys.EVAL:
         return tf.estimator.EstimatorSpec(
             mode, loss=loss, eval_metric_ops=metrics)
-
-
-    # Create training op.
-    #if training with reinforcment learning
-    if mode== tf.estimator.ModeKeys.TRAIN2:
-        loss= sum(labels)
-        optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
-        train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
-        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
     assert mode == tf.estimator.ModeKeys.TRAIN
     #if training with supervised learning. (labels used instead of loss)
