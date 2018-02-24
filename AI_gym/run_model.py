@@ -15,7 +15,7 @@ from tensorflow.contrib.predictor.saved_model_predictor import  SavedModelPredic
 from tensorflow.contrib.predictor.predictor_factories import from_saved_model
 import glob
 from tensorflow.python.ops import math_ops
-from AI_gym.tren_modell1 import my_model
+from AI_gym.create_model import my_model
 
 env = gym.make('CartPole-v0')
 env.reset()
